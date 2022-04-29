@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using WyrApi.Models;
 using WyrApi.Settings;
 
 namespace WyrApi.Extensions;
@@ -10,14 +11,15 @@ public static partial class StartupConfigurations
   {
     config = config.GetSection(MongoDbOptions.Config);
 
-    services.AddOptions<MongoDbOptions>()
-    .Bind(config)
-    .ValidateDataAnnotations();
+    services
+            .AddOptions<MongoDbOptions>()
+            .Bind(config)
+            .ValidateDataAnnotations();
 
     return services.AddSingleton(ClientImplementationFactory)
-                .AddSingleton(DatabaseImplementationFactory)
-                // .AddSingleton(sp=> CollectionImplementationFactory<>(sp, "categories"))
-                ;
+                   .AddSingleton(DatabaseImplementationFactory)
+                   .AddSingleton(sp => CollectionImplementationFactory<Post>(sp, "posts"))
+                   ;
 
 
   }
@@ -48,5 +50,11 @@ public static partial class StartupConfigurations
     var mongoDatabase = serviceProvider.GetRequiredService<IMongoDatabase>();
 
     return mongoDatabase.GetCollection<T>(collectionName);
+  }
+
+  public static void ValidateOptions(this IServiceProvider sp)
+  {
+    _ = sp.GetRequiredService<IOptions<MongoDbOptions>>().Value;
+
   }
 }
